@@ -53,6 +53,7 @@ void Push(Pilha *pilha, char caracter, operacao op){
     pilha->tamanho++;
 }
 
+//to discard
 operacao Topo(Pilha *pilha){
     if(pilha->tamanho == 0){
         printf("Pilha vazia\n");
@@ -70,19 +71,53 @@ Texto *IniciarTexto(){
     return texto;
 }
 
-void Inserir(Texto *texto, char caracter){
+void Inserir(Texto *texto, char caracter, Pilha *pilha, bool undo){
+    if(undo){
+        texto->texto[texto->tamanho ] = caracter;
+        texto->texto[texto->tamanho + 1] = '\0';
+        texto->tamanho++;
+        printf("Texto atual: %s\n", texto->texto);
+        return;
+    }
+
     if(texto->tamanho == 1000){
         printf("Texto cheio\n");
         return;
     }
 
-    texto->texto[texto->tamanho - 1] = caracter;
-    texto->texto[texto->tamanho] = '\0';
+    texto->texto[texto->tamanho] = caracter;
+    texto->texto[texto->tamanho + 1] = '\0';
     texto->tamanho++;
     printf("Caracter inserido: %c\n", caracter);
     printf("Texto atual: %s\n", texto->texto);
+
+    Push(pilha, caracter, INSERIR);
     return;
 }
+
+void ApagarCarecter(Texto *texto, Pilha *pilha, bool undo){
+    if(undo){
+        texto->texto[texto->tamanho - 1] = '\0';
+        texto->tamanho--;
+        printf("Texto atual: %s\n", texto->texto);
+        return;
+    }
+    if(texto->tamanho == 0){
+        printf("Texto vazio\n");
+        return;
+    }
+    char caracter = texto->texto[texto->tamanho -1];
+    texto->texto[texto->tamanho - 1] = '\0';
+    texto->tamanho--;
+    printf("Caracter apagado: %c\n", caracter);
+    printf("Texto atual: %s\n", texto->texto);
+
+    Push(pilha, caracter, APAGAR);
+    return;
+}
+
+
+
 
 /* Metodo de Undo */
 void Undo(Pilha *pilha, Texto *texto){
@@ -94,13 +129,15 @@ void Undo(Pilha *pilha, Texto *texto){
     switch (pilha->topo->op)
     {
     case INSERIR :
-
+        printf("Desfazendo inserção do caracter: %c\n", pilha->topo->caracter);
+        ApagarCarecter(texto, pilha, true);
     return;
         break;
     
     case APAGAR:
-
-    return
+        printf("Desfazendo apagamento do caracter: %c\n", pilha->topo->caracter);
+        Inserir(texto, pilha->topo->caracter, pilha, true);
+    return;
         break;
 
     default:
